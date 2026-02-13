@@ -3,10 +3,12 @@ import { getFile } from '@/lib/store';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const record = getFile(params.id);
+    // Handle both Next.js 14 (sync params) and Next.js 15 (async params)
+    const resolvedParams = params instanceof Promise ? await params : params;
+    const record = getFile(resolvedParams.id);
 
     if (!record) {
       return NextResponse.json(
@@ -33,8 +35,14 @@ export async function GET(
     });
   } catch (error) {
     console.error('Get file error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('Error details:', { errorMessage, errorStack });
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+      },
       { status: 500 }
     );
   }
