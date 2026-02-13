@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export const runtime = 'nodejs';
-
 // Simple in-memory storage
 const fileStore: Map<string, any> = new Map();
 
@@ -11,14 +9,11 @@ export async function GET(
 ) {
   try {
     // Handle both Next.js 14 (sync params) and Next.js 15 (async params)
-    const resolvedParams = params instanceof Promise ? await params : params;
-    const record = fileStore.get(String(resolvedParams.id));
+    const id = params instanceof Promise ? (await params).id : params.id;
+    const record = fileStore.get(id);
 
     if (!record) {
-      return NextResponse.json(
-        { error: 'File not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'File not found' }, { status: 404 });
     }
 
     // Return encrypted record only (server never sees plaintext)
@@ -37,17 +32,11 @@ export async function GET(
       alg: record.alg,
       mk_version: record.mk_version,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Get file error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error('Error details:', { errorMessage, errorStack });
-    return NextResponse.json(
-      { 
-        error: 'Internal server error',
-        message: process.env.NODE_ENV === 'development' ? errorMessage : undefined
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      error: 'Internal server error',
+      message: error?.message || 'Unknown error'
+    }, { status: 500 });
   }
 }
