@@ -45,9 +45,15 @@ PORT=3001
 HOST=0.0.0.0
 ```
 
-**apps/web/.env.local:**
+**For local development with separate backend (apps/web/.env.local):**
 ```
 NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_MASTER_KEY=your_generated_64_character_hex_key_here
+```
+
+**For Vercel deployment**, only set:
+```
+NEXT_PUBLIC_API_URL=/api
 NEXT_PUBLIC_MASTER_KEY=your_generated_64_character_hex_key_here
 ```
 
@@ -92,18 +98,29 @@ This will start:
 ```
 .
 ├── apps/
-│   ├── api/          # Fastify backend
-│   └── web/          # Next.js frontend
+│   ├── api/                    # Fastify backend (optional, for separate deployment)
+│   └── web/                     # Next.js frontend with API routes
+│       └── src/
+│           ├── app/
+│           │   ├── api/         # Next.js API routes (replaces Fastify backend)
+│           │   │   └── files/   # File upload/download endpoints
+│           │   └── page.tsx     # Main UI component
+│           └── lib/
+│               └── store.ts     # In-memory file storage
 ├── packages/
-│   └── crypto/       # Shared encryption utilities
-└── package.json      # Root workspace config
+│   └── crypto/                  # Shared encryption utilities
+└── package.json                 # Root workspace config
 ```
 
 ## API Endpoints
 
-- `POST /files/upload` - Upload encrypted file
-- `GET /files/:id` - Get encrypted file record
-- `POST /files/:id/decrypt` - Decrypt and download file (server-side decryption endpoint - not used in current implementation)
+The API is available as Next.js API routes (when deployed on Vercel) or Fastify endpoints (when using the separate backend):
+
+- `POST /api/files/upload` - Upload encrypted file
+- `GET /api/files/:id` - Get encrypted file record
+- `POST /api/files/:id/decrypt` - Decrypt and download file (server-side decryption endpoint - not used in current implementation)
+
+**Note**: When deployed on Vercel, the API routes are automatically available at `/api/*`. For local development with the separate Fastify backend, use `http://localhost:3001/files/*`.
 
 ## Security Notes
 
@@ -120,13 +137,100 @@ This is a learning project with intentional simplifications:
 
 ## Deployment
 
-### Vercel (Frontend)
+### Deploy to Vercel (Full Stack)
 
-The Next.js app can be deployed to Vercel. Make sure to set environment variables in Vercel dashboard.
+Both the frontend and backend can be deployed together on Vercel using Next.js API routes. The Fastify backend has been converted to Next.js API routes for seamless deployment.
 
-### Backend
+#### Prerequisites
 
-The Fastify backend can be deployed to any Node.js hosting service (Railway, Render, etc.).
+1. **Generate a production master key** (keep this secret!):
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+   Save this key securely - you'll need it for Vercel environment variables.
+
+2. **Install Vercel CLI** (optional, you can also use the web dashboard):
+   ```bash
+   npm i -g vercel
+   ```
+
+#### Deployment Steps
+
+1. **Login to Vercel**:
+   ```bash
+   vercel login
+   ```
+
+2. **Deploy from the project root**:
+   ```bash
+   vercel
+   ```
+   
+   Or connect your GitHub repository to [Vercel](https://vercel.com) for automatic deployments.
+
+3. **Configure Vercel for Monorepo**:
+   
+   **Option A: Using Vercel Dashboard (Recommended)**
+   
+   After connecting your repository, go to Project Settings → General:
+   - **Root Directory**: Set to `apps/web`
+   - Vercel will automatically detect Next.js and configure build settings
+   
+   **Option B: Using vercel.json**
+   
+   The included `vercel.json` in the root directory will handle the monorepo configuration. When deploying from root:
+   - Vercel will use the build commands specified in `vercel.json`
+   - Make sure the root directory is set to the project root (not `apps/web`)
+   
+   **Manual Configuration** (if needed):
+   - **Root Directory**: `apps/web` (if deploying from dashboard)
+   - **Build Command**: `cd ../.. && npm install && npm run build --filter=@secure-file-drop/web`
+   - **Output Directory**: `.next` (default)
+   - **Install Command**: `cd ../.. && npm install`
+
+4. **Set Environment Variables in Vercel Dashboard**:
+   
+   Go to your project settings → Environment Variables and add:
+   - `NEXT_PUBLIC_MASTER_KEY`: Your generated 64-character hex master key
+   - `NEXT_PUBLIC_API_URL`: Leave empty or set to `/api` (uses relative paths)
+   
+   **Note**: The `NEXT_PUBLIC_` prefix makes these variables available to the browser. In production, consider implementing a key exchange protocol instead of exposing the master key.
+
+5. **Redeploy**:
+   
+   After setting environment variables, trigger a new deployment:
+   ```bash
+   vercel --prod
+   ```
+   
+   Or push to your main branch if you have GitHub integration enabled.
+
+#### Testing Your Deployment
+
+1. Visit your Vercel deployment URL (e.g., `https://your-app.vercel.app`)
+2. Try uploading a file - it should encrypt and store it
+3. Copy the file ID and test downloading it
+
+#### Important Notes
+
+⚠️ **Storage Limitation**: The current implementation uses in-memory storage. In Vercel's serverless environment, each function invocation may have separate memory, so files may not persist across requests. For production:
+- Add a database (Vercel Postgres, Supabase, etc.)
+- Use object storage (AWS S3, Cloudflare R2, etc.)
+- Implement persistent file storage
+
+⚠️ **Security**: The master key is currently exposed to the frontend via `NEXT_PUBLIC_MASTER_KEY`. For production:
+- Implement a key exchange protocol
+- Use server-side key derivation
+- Consider using Web Crypto API with proper key management
+
+⚠️ **CORS**: CORS is automatically handled by Next.js API routes when deployed on the same domain.
+
+#### Alternative: Separate Backend Deployment
+
+If you prefer to keep the Fastify backend separate, you can:
+- Deploy the Next.js frontend to Vercel
+- Deploy the Fastify backend to Railway, Render, or Fly.io
+- Set `NEXT_PUBLIC_API_URL` to your backend URL
 
 ## License
 

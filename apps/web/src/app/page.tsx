@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// Use relative path for Vercel deployment, or absolute URL for local development with separate backend
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export default function Home() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
