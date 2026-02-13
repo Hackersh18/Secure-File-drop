@@ -1,278 +1,219 @@
-# Secure File Drop
+# Secure File Drop 🔒
 
-A secure file sharing application built with Turborepo, Next.js, and Fastify. Files are encrypted in the browser using AES-256-GCM before being uploaded to the server.
+A simple, secure way to share files. Your files are encrypted in your browser before they're uploaded, so even the server never sees what you're sharing.
 
-## Tech Stack
+## What is this?
 
-- **Monorepo**: Turborepo + pnpm workspaces
-- **Frontend**: Next.js 14 (TypeScript)
-- **Backend**: Fastify (TypeScript)
-- **Crypto**: AES-256-GCM encryption
-- **Shared Package**: `@secure-file-drop/crypto`
+This app lets you:
+- **Upload files** that get encrypted automatically
+- **Share a file ID** with someone
+- **Download files** that only you (and whoever has the ID) can decrypt
 
-**Note**: This project uses pnpm for package management.
+The cool part? Everything is encrypted in your browser. The server never sees your actual files - just encrypted data.
 
-## Getting Started
+## Quick Start
 
-### Prerequisites
+### What you need
 
-- Node.js 18+
-- pnpm 8+
+- **Node.js** version 18 or higher
+- **pnpm** version 8 or higher (we use pnpm instead of npm)
 
-### Installation
+### Step 1: Install everything
 
-1. Install dependencies:
+Open your terminal in this folder and run:
+
 ```bash
 pnpm install
 ```
 
-2. Generate a master key (32 bytes = 64 hex characters):
+This downloads all the code libraries we need.
+
+### Step 2: Create your secret key
+
+You need a secret key to encrypt files. Generate one by running:
+
 ```bash
-# Generate a random 32-byte key in hex format
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-3. Create environment files:
+This will print a long string of random characters - that's your master key! **Save it somewhere safe** - you'll need it later.
 
-**apps/api/.env:**
-```
-MASTER_KEY=your_generated_64_character_hex_key_here
-PORT=3001
-HOST=0.0.0.0
-```
+### Step 3: Set up environment variables
 
-**For local development with separate backend (apps/web/.env.local):**
+Create a file called `.env.local` in the `apps/web` folder with:
+
 ```
 NEXT_PUBLIC_API_URL=http://localhost:3001
-NEXT_PUBLIC_MASTER_KEY=your_generated_64_character_hex_key_here
+NEXT_PUBLIC_MASTER_KEY=your_generated_key_here
 ```
 
-**For Vercel deployment**, only set:
-```
-NEXT_PUBLIC_API_URL=/api
-NEXT_PUBLIC_MASTER_KEY=your_generated_64_character_hex_key_here
-```
+Replace `your_generated_key_here` with the key you generated in Step 2.
 
-**Note**: In production, the master key should NEVER be exposed to the frontend. This is a simplified implementation for demonstration purposes.
-
-### Running the Application
-
-Start all services in development mode:
+### Step 4: Run the app
 
 ```bash
 pnpm dev
 ```
 
-This will start:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:3001
+Now open your browser and go to:
+- **Frontend**: http://localhost:3000
+- **Backend**: http://localhost:3001
 
-## How It Works
+That's it! You should see the app running.
 
-1. **Upload Flow**:
-   - User selects a file in the browser
-   - File is encrypted using AES-256-GCM with a randomly generated DEK (Data Encryption Key)
-   - DEK is wrapped (encrypted) using the master key
-   - Encrypted file and wrapped DEK are uploaded to the backend
-   - Backend stores the encrypted data and returns a file ID
+## How it works (simple version)
 
-2. **Download Flow**:
-   - User enters a file ID
-   - Backend returns the encrypted file record
-   - Browser unwraps the DEK using the master key
-   - Browser decrypts the file using the DEK
-   - File is downloaded to the user's device
+### When you upload a file:
 
-**Important**: The server never sees the plaintext file contents - encryption/decryption happens entirely in the browser.
+1. You pick a file in your browser
+2. Your browser creates a random encryption key (DEK)
+3. Your browser encrypts the file with that key
+4. Your browser encrypts the key itself using your master key
+5. Everything encrypted gets sent to the server
+6. The server gives you back a file ID
+
+**Important**: The server never sees your actual file - only encrypted data!
+
+### When you download a file:
+
+1. You enter the file ID
+2. The server sends back the encrypted data
+3. Your browser decrypts the key using your master key
+4. Your browser decrypts the file using that key
+5. Your file downloads to your computer
 
 ## Project Structure
+
+Here's what's in this project:
 
 ```
 .
 ├── apps/
-│   ├── api/                    # Fastify backend (optional, for separate deployment)
-│   └── web/                     # Next.js frontend with API routes
+│   ├── api/          # Optional Fastify backend
+│   └── web/          # Next.js frontend + API routes
 │       └── src/
-│           ├── app/
-│           │   ├── api/         # Next.js API routes (replaces Fastify backend)
-│           │   │   └── files/   # File upload/download endpoints
-│           │   └── page.tsx     # Main UI component
-│           └── lib/
-│               └── store.ts     # In-memory file storage
+│           └── app/
+│               ├── api/      # API endpoints
+│               └── page.tsx  # Main UI
 ├── packages/
-│   └── crypto/                  # Shared encryption utilities
-└── package.json                 # Root workspace config
+│   └── crypto/       # Shared encryption utilities
+└── package.json      # Root workspace config
 ```
 
-## API Endpoints
+## Deploying to Vercel (for free!)
 
-The API is available as Next.js API routes (when deployed on Vercel) or Fastify endpoints (when using the separate backend):
+Vercel is a free hosting service that works great with Next.js. Here's how to deploy:
 
-- `POST /api/files/upload` - Upload encrypted file
-- `GET /api/files/:id` - Get encrypted file record
-- `POST /api/files/:id/decrypt` - Decrypt and download file (server-side decryption endpoint - not used in current implementation)
+### Before you start
 
-**Note**: When deployed on Vercel, the API routes are automatically available at `/api/*`. For local development with the separate Fastify backend, use `http://localhost:3001/files/*`.
-
-## Security Notes
-
-This is a learning project with intentional simplifications:
-
-- ✅ Files are encrypted before upload
-- ✅ Server never sees plaintext
-- ✅ Uses industry-standard AES-256-GCM
-- ⚠️ Master key is exposed to frontend (should use key exchange in production)
-- ⚠️ In-memory storage (no persistence)
-- ⚠️ No authentication/authorization
-- ⚠️ No file size limits
-- ⚠️ No rate limiting
-
-## Deployment
-
-### Deploy to Vercel (Full Stack)
-
-Both the frontend and backend can be deployed together on Vercel using Next.js API routes. The Fastify backend has been converted to Next.js API routes for seamless deployment.
-
-#### Prerequisites
-
-1. **Generate a production master key** (keep this secret!):
+1. **Generate a production key** (different from your local one):
    ```bash
    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    ```
-   Save this key securely - you'll need it for Vercel environment variables.
+   Save this key - you'll need it!
 
-2. **Install Vercel CLI** (optional, you can also use the web dashboard):
-   ```bash
-   pnpm add -g vercel
-   ```
+2. **Push your code to GitHub** (if you haven't already)
 
-#### Deployment Steps
+### Deploy steps
 
-1. **Login to Vercel**:
-   ```bash
-   vercel login
-   ```
+1. **Go to [vercel.com](https://vercel.com)** and sign up/login
 
-2. **Deploy from the project root**:
-   ```bash
-   vercel
-   ```
+2. **Click "New Project"** and connect your GitHub repository
+
+3. **Configure your project**:
    
-   Or connect your GitHub repository to [Vercel](https://vercel.com) for automatic deployments.
-
-3. **Configure Vercel for Monorepo**:
+   In the project settings, you need to set:
    
-   **Important**: You must set the Root Directory in Vercel Dashboard!
+   - **Root Directory**: `apps/web` (this tells Vercel where your app is)
+   - **Framework Preset**: `Next.js` (very important!)
+   - **Package Manager**: `pnpm`
+   - **Node.js Version**: 18.x or higher
    
-   After connecting your repository, go to Project Settings → General:
-   - **Root Directory**: Set to `apps/web`
-   - Vercel will automatically detect Next.js from `apps/web/package.json`
-   - The `vercel.json` in `apps/web` will handle the monorepo build configuration
+   For Build Command, Output Directory, and Install Command - **leave them empty**. The `vercel.json` file handles this automatically.
+
+4. **Add your secret key**:
    
-   **Vercel Configuration** (in Project Settings → General):
+   - Go to Settings → Environment Variables
+   - Click "Add New"
+   - Name: `NEXT_PUBLIC_MASTER_KEY`
+   - Value: Your generated key from step 1
+   - Select all environments (Production, Preview, Development)
+   - Click Save
    
-   **CRITICAL SETTINGS:**
-   - **Root Directory**: `apps/web` (REQUIRED - must be exactly this, no trailing slash)
-   - **Framework Preset**: **Next.js** (VERY IMPORTANT - select this from the dropdown if not auto-detected)
-   - **Node.js Version**: 18.x or higher (check in Settings → General → Node.js Version)
+   **Don't set** `NEXT_PUBLIC_API_URL` - leave it empty for Vercel.
+
+5. **Deploy!**
    
-   **Build Settings** (can leave empty if using vercel.json):
-   - **Build Command**: Leave empty (vercel.json handles it) OR manually set: `cd ../.. && pnpm install && cd apps/web && pnpm run build`
-   - **Output Directory**: Leave empty (defaults to `.next`)
-   - **Install Command**: Leave empty (vercel.json handles it) OR manually set: `cd ../.. && pnpm install`
-   
-   **Package Manager**:
-   - **Package Manager**: pnpm (set this in Settings → General → Package Manager)
-   
-   **Troubleshooting 500 Errors**:
-   
-   If you're getting 500 errors on API routes:
-   1. **Check Build Logs**: Make sure the build completed successfully
-   2. **Check Function Logs**: Go to Deployments → Your deployment → Functions tab → Click on the failing function → Check Logs
-   3. **Test Simple Route**: Visit `/api/test` to verify API routes work at all
-   4. **Verify Root Directory**: Must be exactly `apps/web` (not `apps/web/` or anything else)
-   5. **Check Environment**: Make sure Node.js version is 18+ in Vercel settings
-   6. **Rebuild**: Try triggering a new deployment after fixing configuration
+   - If you connected GitHub, Vercel will deploy automatically when you push
+   - Or click "Deploy" in the Vercel dashboard
 
-4. **Set Environment Variables in Vercel Dashboard**:
-   
-   Go to your project settings → **Environment Variables** and add:
-   
-   **Required:**
-   - **`NEXT_PUBLIC_MASTER_KEY`**: Your generated 64-character hex master key
-     - Generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
-     - This is REQUIRED for the app to work
-   
-   **Optional (for Vercel):**
-   - **`NEXT_PUBLIC_API_URL`**: **Leave this EMPTY** or don't set it
-     - For Vercel: Leave empty (defaults to `/api` automatically)
-     - Only set if using a separate backend: `http://localhost:3001`
-   
-   **Steps to add in Vercel:**
-   1. Go to Project Settings → Environment Variables
-   2. Click "Add New"
-   3. Enter variable name: `NEXT_PUBLIC_MASTER_KEY`
-   4. Enter your generated 64-character hex key as the value
-   5. Select environments: Production, Preview, Development (or all)
-   6. Click Save
-   7. **Redeploy** for changes to take effect
-   
-   **Important Notes**: 
-   - The `NEXT_PUBLIC_` prefix makes variables available to the browser
-   - `NEXT_PUBLIC_MASTER_KEY` is exposed to frontend - security risk in production
-   - For production, consider implementing a key exchange protocol
-   - See `ENV_VARIABLES.md` for detailed environment variable documentation
+### Checklist before deploying
 
-5. **Redeploy**:
-   
-   After setting environment variables, trigger a new deployment:
-   ```bash
-   vercel --prod
-   ```
-   
-   Or push to your main branch if you have GitHub integration enabled.
+Make sure you've done these:
 
-### Pre-Deployment Checklist
+- ✅ Set Root Directory to `apps/web`
+- ✅ Set Framework Preset to "Next.js"
+- ✅ Set Package Manager to `pnpm`
+- ✅ Added `NEXT_PUBLIC_MASTER_KEY` environment variable
+- ✅ Left `NEXT_PUBLIC_API_URL` empty
+- ✅ Your code builds locally (try `cd apps/web && pnpm run build`)
 
-Before deploying, ensure:
+### Testing your deployment
 
-- ✅ **Framework Preset** is set to "Next.js" in Vercel Settings → General
-- ✅ **Root Directory** is set to `apps/web` (exact, no trailing slash)
-- ✅ **Package Manager** is set to `pnpm`
-- ✅ **Node.js Version** is 18.x or higher
-- ✅ **Environment Variable** `NEXT_PUBLIC_MASTER_KEY` is set (64-character hex)
-- ✅ **Environment Variable** `NEXT_PUBLIC_API_URL` is empty or not set (for Vercel)
-- ✅ Code builds successfully locally: `cd apps/web && pnpm run build`
-- ✅ All TypeScript errors are resolved
-- ✅ `.env.local` is in `.gitignore` (should not be committed)
+1. Visit your Vercel URL (something like `https://your-app.vercel.app`)
+2. Try uploading a file
+3. Copy the file ID it gives you
+4. Try downloading it using that ID
 
-#### Testing Your Deployment
+If it works, you're all set! 🎉
 
-1. Visit your Vercel deployment URL (e.g., `https://your-app.vercel.app`)
-2. Try uploading a file - it should encrypt and store it
-3. Copy the file ID and test downloading it
+## Important things to know
 
-#### Important Notes
+### ⚠️ Storage limitation
 
-⚠️ **Storage Limitation**: The current implementation uses in-memory storage. In Vercel's serverless environment, each function invocation may have separate memory, so files may not persist across requests. For production:
-- Add a database (Vercel Postgres, Supabase, etc.)
-- Use object storage (AWS S3, Cloudflare R2, etc.)
-- Implement persistent file storage
+Right now, files are stored in memory. This means:
+- Files might disappear when the server restarts
+- Files might not work across different server instances
 
-⚠️ **Security**: The master key is currently exposed to the frontend via `NEXT_PUBLIC_MASTER_KEY`. For production:
-- Implement a key exchange protocol
-- Use server-side key derivation
-- Consider using Web Crypto API with proper key management
+**For a real app**, you'd want to use:
+- A database (like Vercel Postgres or Supabase)
+- File storage (like AWS S3 or Cloudflare R2)
 
-⚠️ **CORS**: CORS is automatically handled by Next.js API routes when deployed on the same domain.
+### ⚠️ Security notes
 
-#### Alternative: Separate Backend Deployment
+This is a learning project. For a real production app, you'd want:
+- Better key management (don't expose the master key to the frontend)
+- User authentication
+- File size limits
+- Rate limiting
+- Better error handling
 
-If you prefer to keep the Fastify backend separate, you can:
-- Deploy the Next.js frontend to Vercel
-- Deploy the Fastify backend to Railway, Render, or Fly.io
-- Set `NEXT_PUBLIC_API_URL` to your backend URL
+But for learning and testing, this works great!
 
-## License
+## Troubleshooting
 
-MIT
+### Build fails on Vercel?
+
+1. Check that Root Directory is exactly `apps/web` (no trailing slash)
+2. Make sure Framework Preset is set to "Next.js"
+3. Check the build logs in Vercel for specific errors
+
+### Getting 500 errors?
+
+1. Check that `NEXT_PUBLIC_MASTER_KEY` is set in environment variables
+2. Check the Vercel function logs for specific error messages
+3. Check the function logs in Vercel (Deployments → Your deployment → Functions)
+
+### Files not persisting?
+
+This is expected! The app uses in-memory storage. Each serverless function might have its own memory. For production, add a database.
+
+## Tech Stack
+
+- **Frontend**: Next.js 14 (React with TypeScript)
+- **Backend**: Next.js API routes (or Fastify for separate deployment)
+- **Encryption**: AES-256-GCM (industry standard)
+- **Package Manager**: pnpm
+- **Monorepo**: Turborepo
+
+

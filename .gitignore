@@ -16,7 +16,10 @@ coverage
 .next/
 out/
 build
-dist
+
+# Build artifacts
+dist/
+*.tsbuildinfo
 
 # Production
 *.log
