@@ -34,7 +34,7 @@ req.on('error', (error) => {
   
   if (error.code === 'ECONNREFUSED') {
     console.log('💡 Solution: Start the backend with:');
-    console.log('   cd apps/api && npm run dev\n');
+    console.log('   cd apps/api && pnpm run dev\n');
   } else {
     console.log('💡 Check:');
     console.log('   1. Is the backend running?');

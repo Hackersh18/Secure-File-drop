@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@fastify/cors": "^8.4.0",
-    "@secure-file-drop/crypto": "*",
+    "@secure-file-drop/crypto": "workspace:*",
     "dotenv": "^16.6.1",
     "fastify": "^4.24.0"
   },

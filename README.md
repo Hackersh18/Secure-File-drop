@@ -4,29 +4,25 @@ A secure file sharing application built with Turborepo, Next.js, and Fastify. Fi
 
 ## Tech Stack
 
-- **Monorepo**: Turborepo + npm/pnpm workspaces
+- **Monorepo**: Turborepo + pnpm workspaces
 - **Frontend**: Next.js 14 (TypeScript)
 - **Backend**: Fastify (TypeScript)
 - **Crypto**: AES-256-GCM encryption
 - **Shared Package**: `@secure-file-drop/crypto`
 
-**Note**: Works with both npm (included with Node.js) and pnpm. npm is recommended if you're having pnpm network issues.
+**Note**: This project uses pnpm for package management.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ (includes npm)
-- pnpm 8+ (optional - npm works fine)
+- Node.js 18+
+- pnpm 8+
 
 ### Installation
 
 1. Install dependencies:
 ```bash
-# Using npm (recommended if pnpm has issues)
-npm install
-
-# OR using pnpm
 pnpm install
 ```
 
@@ -64,10 +60,6 @@ NEXT_PUBLIC_MASTER_KEY=your_generated_64_character_hex_key_here
 Start all services in development mode:
 
 ```bash
-# Using npm (recommended)
-npm run dev
-
-# OR using pnpm
 pnpm dev
 ```
 
@@ -151,7 +143,7 @@ Both the frontend and backend can be deployed together on Vercel using Next.js A
 
 2. **Install Vercel CLI** (optional, you can also use the web dashboard):
    ```bash
-   npm i -g vercel
+   pnpm add -g vercel
    ```
 
 #### Deployment Steps
@@ -184,9 +176,9 @@ Both the frontend and backend can be deployed together on Vercel using Next.js A
    
    **Manual Configuration** (if needed):
    - **Root Directory**: `apps/web` (if deploying from dashboard)
-   - **Build Command**: `cd ../.. && npm install && npm run build --filter=@secure-file-drop/web`
+   - **Build Command**: `cd ../.. && pnpm install && pnpm run build --filter=@secure-file-drop/web`
    - **Output Directory**: `.next` (default)
-   - **Install Command**: `cd ../.. && npm install`
+   - **Install Command**: `cd ../.. && pnpm install`
 
 4. **Set Environment Variables in Vercel Dashboard**:
    
