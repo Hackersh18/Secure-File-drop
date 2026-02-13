@@ -196,17 +196,32 @@ Both the frontend and backend can be deployed together on Vercel using Next.js A
 
 4. **Set Environment Variables in Vercel Dashboard**:
    
-   Go to your project settings → Environment Variables and add:
-   - `NEXT_PUBLIC_MASTER_KEY`: Your generated 64-character hex master key (REQUIRED)
-   - `NEXT_PUBLIC_API_URL`: **Leave this EMPTY** for Vercel deployment (it defaults to `/api`). Only set this if you're using a separate backend server.
+   Go to your project settings → **Environment Variables** and add:
    
-   **Important**: 
-   - For Vercel deployment with Next.js API routes, `NEXT_PUBLIC_API_URL` should be **empty** or not set at all
-   - The frontend will automatically use `/api` as the default (relative path)
-   - Setting it to `/api` is also fine, but not necessary
-   - Only set `NEXT_PUBLIC_API_URL` if you're using a separate backend (e.g., `http://localhost:3001` for local dev)
+   **Required:**
+   - **`NEXT_PUBLIC_MASTER_KEY`**: Your generated 64-character hex master key
+     - Generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+     - This is REQUIRED for the app to work
    
-   **Note**: The `NEXT_PUBLIC_` prefix makes these variables available to the browser. In production, consider implementing a key exchange protocol instead of exposing the master key.
+   **Optional (for Vercel):**
+   - **`NEXT_PUBLIC_API_URL`**: **Leave this EMPTY** or don't set it
+     - For Vercel: Leave empty (defaults to `/api` automatically)
+     - Only set if using a separate backend: `http://localhost:3001`
+   
+   **Steps to add in Vercel:**
+   1. Go to Project Settings → Environment Variables
+   2. Click "Add New"
+   3. Enter variable name: `NEXT_PUBLIC_MASTER_KEY`
+   4. Enter your generated 64-character hex key as the value
+   5. Select environments: Production, Preview, Development (or all)
+   6. Click Save
+   7. **Redeploy** for changes to take effect
+   
+   **Important Notes**: 
+   - The `NEXT_PUBLIC_` prefix makes variables available to the browser
+   - `NEXT_PUBLIC_MASTER_KEY` is exposed to frontend - security risk in production
+   - For production, consider implementing a key exchange protocol
+   - See `ENV_VARIABLES.md` for detailed environment variable documentation
 
 5. **Redeploy**:
    
@@ -216,6 +231,20 @@ Both the frontend and backend can be deployed together on Vercel using Next.js A
    ```
    
    Or push to your main branch if you have GitHub integration enabled.
+
+### Pre-Deployment Checklist
+
+Before deploying, ensure:
+
+- ✅ **Framework Preset** is set to "Next.js" in Vercel Settings → General
+- ✅ **Root Directory** is set to `apps/web` (exact, no trailing slash)
+- ✅ **Package Manager** is set to `pnpm`
+- ✅ **Node.js Version** is 18.x or higher
+- ✅ **Environment Variable** `NEXT_PUBLIC_MASTER_KEY` is set (64-character hex)
+- ✅ **Environment Variable** `NEXT_PUBLIC_API_URL` is empty or not set (for Vercel)
+- ✅ Code builds successfully locally: `cd apps/web && pnpm run build`
+- ✅ All TypeScript errors are resolved
+- ✅ `.env.local` is in `.gitignore` (should not be committed)
 
 #### Testing Your Deployment
 

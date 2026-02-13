@@ -68,9 +68,15 @@ export default function Home() {
       throw new Error(`Master key must be 32 bytes (256 bits), got ${masterKeyBuffer.length} bytes`);
     }
     
+    // Create a new ArrayBuffer to ensure proper type compatibility
+    const masterKeyArrayBuffer = masterKeyBuffer.buffer.slice(
+      masterKeyBuffer.byteOffset,
+      masterKeyBuffer.byteOffset + masterKeyBuffer.byteLength
+    );
+    
     const masterKeyCrypto = await crypto.subtle.importKey(
       'raw',
-      masterKeyBuffer,
+      masterKeyArrayBuffer,
       { name: 'AES-GCM', length: 256 },
       false,
       ['encrypt']
@@ -125,9 +131,15 @@ export default function Home() {
       throw new Error(`Master key must be 32 bytes (256 bits), got ${masterKeyBuffer.length} bytes`);
     }
     
+    // Create a new ArrayBuffer to ensure proper type compatibility
+    const masterKeyArrayBuffer = masterKeyBuffer.buffer.slice(
+      masterKeyBuffer.byteOffset,
+      masterKeyBuffer.byteOffset + masterKeyBuffer.byteLength
+    );
+    
     const masterKeyCrypto = await crypto.subtle.importKey(
       'raw',
-      masterKeyBuffer,
+      masterKeyArrayBuffer,
       { name: 'AES-GCM', length: 256 },
       false,
       ['decrypt']
@@ -223,7 +235,7 @@ export default function Home() {
       // For demo purposes, we'll use a placeholder - in production this should be handled securely
       const masterKey = process.env.NEXT_PUBLIC_MASTER_KEY || '';
       if (!masterKey) {
-        throw new Error('Master key not configured. Please set NEXT_PUBLIC_MASTER_KEY in .env.local');
+        throw new Error('Master key not configured. Please set NEXT_PUBLIC_MASTER_KEY environment variable.');
       }
       
       // Validate master key format
@@ -290,7 +302,7 @@ export default function Home() {
       // Get master key
       const masterKey = process.env.NEXT_PUBLIC_MASTER_KEY || '';
       if (!masterKey) {
-        throw new Error('Master key not configured. Please set NEXT_PUBLIC_MASTER_KEY in .env.local');
+        throw new Error('Master key not configured. Please set NEXT_PUBLIC_MASTER_KEY environment variable.');
       }
       
       // Validate master key format
