@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SecureFileRecord, getFile, saveFile, generateFileId } from '@/lib/store';
+import { SecureFileRecord, saveFile, generateFileId } from '../../../lib/store';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,7 +1,7 @@
 // In-memory file storage
 // Note: In Vercel's serverless environment, this will be reset on each cold start
 // For production, consider using a database or external storage
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 
 // Define the type locally to avoid workspace package resolution issues in serverless
 export interface SecureFileRecord {
