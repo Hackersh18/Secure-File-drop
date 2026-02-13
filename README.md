@@ -162,20 +162,20 @@ Both the frontend and backend can be deployed together on Vercel using Next.js A
 
 3. **Configure Vercel for Monorepo**:
    
-   **Option A: Using Vercel Dashboard (Recommended)**
+   **Important**: You must set the Root Directory in Vercel Dashboard!
    
    After connecting your repository, go to Project Settings → General:
    - **Root Directory**: Set to `apps/web`
-   - Vercel will automatically detect Next.js and configure build settings
+   - Vercel will automatically detect Next.js from `apps/web/package.json`
+   - The `vercel.json` in `apps/web` will handle the monorepo build configuration
    
-   **Option B: Using vercel.json**
+   **What the vercel.json does**:
+   - Installs dependencies from the monorepo root using `pnpm install`
+   - Builds only the web app using `pnpm run build --filter=@secure-file-drop/web`
+   - Outputs to `.next` directory
    
-   The included `vercel.json` in the root directory will handle the monorepo configuration. When deploying from root:
-   - Vercel will use the build commands specified in `vercel.json`
-   - Make sure the root directory is set to the project root (not `apps/web`)
-   
-   **Manual Configuration** (if needed):
-   - **Root Directory**: `apps/web` (if deploying from dashboard)
+   **If you need manual configuration**:
+   - **Root Directory**: `apps/web` (REQUIRED - must match where package.json with Next.js is located)
    - **Build Command**: `cd ../.. && pnpm install && pnpm run build --filter=@secure-file-drop/web`
    - **Output Directory**: `.next` (default)
    - **Install Command**: `cd ../.. && pnpm install`
