@@ -1,8 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFile } from '../../../lib/store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// In-memory storage (inline to avoid module resolution issues)
+interface SecureFileRecord {
+  id: string;
+  filename: string;
+  contentType: string;
+  size: number;
+  createdAt: string;
+  file_nonce: string;
+  file_ct: string;
+  file_tag: string;
+  dek_wrap_nonce: string;
+  dek_wrapped: string;
+  dek_wrap_tag: string;
+  alg: 'AES-256-GCM';
+  mk_version: 1;
+}
+
+// Shared store across all serverless functions (may not persist across cold starts)
+const fileStore = new Map<string, SecureFileRecord>();
 
 export async function GET(
   request: NextRequest,
@@ -11,7 +30,7 @@ export async function GET(
   try {
     // Handle both Next.js 14 (sync params) and Next.js 15 (async params)
     const resolvedParams = params instanceof Promise ? await params : params;
-    const record = getFile(resolvedParams.id);
+    const record = fileStore.get(resolvedParams.id);
 
     if (!record) {
       return NextResponse.json(

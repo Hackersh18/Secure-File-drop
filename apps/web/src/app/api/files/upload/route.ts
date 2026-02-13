@@ -1,8 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SecureFileRecord, saveFile, generateFileId } from '../../../lib/store';
+import { randomBytes } from 'node:crypto';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// In-memory storage (inline to avoid module resolution issues)
+interface SecureFileRecord {
+  id: string;
+  filename: string;
+  contentType: string;
+  size: number;
+  createdAt: string;
+  file_nonce: string;
+  file_ct: string;
+  file_tag: string;
+  dek_wrap_nonce: string;
+  dek_wrapped: string;
+  dek_wrap_tag: string;
+  alg: 'AES-256-GCM';
+  mk_version: 1;
+}
+
+const fileStore = new Map<string, SecureFileRecord>();
+
+function generateFileId(): string {
+  return randomBytes(16).toString('hex');
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,7 +71,7 @@ export async function POST(request: NextRequest) {
       mk_version: 1,
     };
 
-    saveFile(record);
+    fileStore.set(record.id, record);
 
     return NextResponse.json(
       {
