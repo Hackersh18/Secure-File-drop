@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SecureFileRecord } from '@secure-file-drop/crypto';
-import { getFile, saveFile, generateFileId } from '@/lib/store';
+import { SecureFileRecord, getFile, saveFile, generateFileId } from '@/lib/store';
 
 export async function POST(request: NextRequest) {
   try {
