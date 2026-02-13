@@ -6,6 +6,9 @@ function generateFileId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
+export const maxDuration = 30;
+export const runtime = 'nodejs';
+
 export async function POST(request: NextRequest) {
   try {
     let body;
@@ -15,6 +18,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Invalid JSON in request body' },
         { status: 400 }
+      );
+    }
+
+    const MAX_SIZE = 4 * 1024 * 1024; // 4MB
+    if (body?.size && body.size > MAX_SIZE) {
+      return NextResponse.json(
+        { error: `File too large. Maximum size is ${MAX_SIZE / 1024 / 1024}MB.` },
+        { status: 413 }
       );
     }
 

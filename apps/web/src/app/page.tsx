@@ -204,6 +204,15 @@ export default function Home() {
       return;
     }
 
+    const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB (Vercel limit is 4.5MB, leaving some buffer)
+    if (selectedFile.size > MAX_FILE_SIZE) {
+      setUploadStatus({ 
+        type: 'error', 
+        message: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB. Your file is ${(selectedFile.size / 1024 / 1024).toFixed(2)}MB.` 
+      });
+      return;
+    }
+
     setIsUploading(true);
     setUploadStatus({ type: 'info', message: 'Encrypting file...' });
 
@@ -235,11 +244,15 @@ export default function Home() {
 
       if (!response.ok) {
         let errorMessage = 'Upload failed';
-        try {
-          const error = await response.json();
-          errorMessage = error.error || errorMessage;
-        } catch {
-          errorMessage = `Upload failed: ${response.status} ${response.statusText}`;
+        if (response.status === 413) {
+          errorMessage = 'File too large. Maximum size is 4MB. Please try a smaller file.';
+        } else {
+          try {
+            const error = await response.json();
+            errorMessage = error.error || errorMessage;
+          } catch {
+            errorMessage = `Upload failed: ${response.status} ${response.statusText}`;
+          }
         }
         throw new Error(errorMessage);
       }
