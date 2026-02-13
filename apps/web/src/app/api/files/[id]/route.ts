@@ -3,25 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// In-memory storage (inline to avoid module resolution issues)
-interface SecureFileRecord {
-  id: string;
-  filename: string;
-  contentType: string;
-  size: number;
-  createdAt: string;
-  file_nonce: string;
-  file_ct: string;
-  file_tag: string;
-  dek_wrap_nonce: string;
-  dek_wrapped: string;
-  dek_wrap_tag: string;
-  alg: 'AES-256-GCM';
-  mk_version: 1;
+// In-memory storage - using global to share across serverless instances
+declare global {
+  var fileStore: Map<string, any> | undefined;
 }
 
-// Shared store across all serverless functions (may not persist across cold starts)
-const fileStore = new Map<string, SecureFileRecord>();
+const getFileStore = () => {
+  if (!global.fileStore) {
+    global.fileStore = new Map();
+  }
+  return global.fileStore;
+};
 
 export async function GET(
   request: NextRequest,
@@ -30,7 +22,8 @@ export async function GET(
   try {
     // Handle both Next.js 14 (sync params) and Next.js 15 (async params)
     const resolvedParams = params instanceof Promise ? await params : params;
-    const record = fileStore.get(resolvedParams.id);
+    const fileStore = getFileStore();
+    const record = fileStore.get(String(resolvedParams.id));
 
     if (!record) {
       return NextResponse.json(

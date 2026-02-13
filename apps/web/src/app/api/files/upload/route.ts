@@ -1,35 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { randomBytes } from 'node:crypto';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// In-memory storage (inline to avoid module resolution issues)
-interface SecureFileRecord {
-  id: string;
-  filename: string;
-  contentType: string;
-  size: number;
-  createdAt: string;
-  file_nonce: string;
-  file_ct: string;
-  file_tag: string;
-  dek_wrap_nonce: string;
-  dek_wrapped: string;
-  dek_wrap_tag: string;
-  alg: 'AES-256-GCM';
-  mk_version: 1;
+// In-memory storage - using global to share across serverless instances
+declare global {
+  var fileStore: Map<string, any> | undefined;
 }
 
-const fileStore = new Map<string, SecureFileRecord>();
+const getFileStore = () => {
+  if (!global.fileStore) {
+    global.fileStore = new Map();
+  }
+  return global.fileStore;
+};
 
 function generateFileId(): string {
-  return randomBytes(16).toString('hex');
+  const crypto = require('crypto');
+  return crypto.randomBytes(16).toString('hex');
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
 
     // Basic validation
     if (!body.filename || !body.contentType || !body.size) {
@@ -54,19 +55,20 @@ export async function POST(request: NextRequest) {
     }
 
     const fileId = generateFileId();
+    const fileStore = getFileStore();
 
-    const record: SecureFileRecord = {
+    const record = {
       id: fileId,
-      filename: body.filename,
-      contentType: body.contentType,
-      size: body.size,
+      filename: String(body.filename),
+      contentType: String(body.contentType),
+      size: Number(body.size),
       createdAt: new Date().toISOString(),
-      file_nonce: body.file_nonce,
-      file_ct: body.file_ct,
-      file_tag: body.file_tag,
-      dek_wrap_nonce: body.dek_wrap_nonce,
-      dek_wrapped: body.dek_wrapped,
-      dek_wrap_tag: body.dek_wrap_tag,
+      file_nonce: String(body.file_nonce),
+      file_ct: String(body.file_ct),
+      file_tag: String(body.file_tag),
+      dek_wrap_nonce: String(body.dek_wrap_nonce),
+      dek_wrapped: String(body.dek_wrapped),
+      dek_wrap_tag: String(body.dek_wrap_tag),
       alg: 'AES-256-GCM',
       mk_version: 1,
     };
