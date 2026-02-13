@@ -154,10 +154,13 @@ export default function Home() {
     wrappedDekWithTag.set(dekWrapped);
     wrappedDekWithTag.set(dekWrapTag, dekWrapped.length);
 
+    // Ensure nonce is properly typed for crypto operations
+    const dekWrapNonceBuffer = new Uint8Array(dekWrapNonce);
+
     const dekBuffer = await crypto.subtle.decrypt(
       {
         name: 'AES-GCM',
-        iv: dekWrapNonce,
+        iv: dekWrapNonceBuffer,
         tagLength: 128,
       },
       masterKeyCrypto,
@@ -182,10 +185,13 @@ export default function Home() {
     fileCiphertextWithTag.set(fileCiphertext);
     fileCiphertextWithTag.set(fileTag, fileCiphertext.length);
 
+    // Ensure nonce is properly typed for crypto operations
+    const fileNonceBuffer = new Uint8Array(fileNonce);
+
     const decryptedFile = await crypto.subtle.decrypt(
       {
         name: 'AES-GCM',
-        iv: fileNonce,
+        iv: fileNonceBuffer,
         tagLength: 128,
       },
       dekKey,
