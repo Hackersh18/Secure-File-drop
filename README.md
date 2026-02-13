@@ -169,22 +169,42 @@ Both the frontend and backend can be deployed together on Vercel using Next.js A
    - Vercel will automatically detect Next.js from `apps/web/package.json`
    - The `vercel.json` in `apps/web` will handle the monorepo build configuration
    
-   **What the vercel.json does**:
-   - Installs dependencies from the monorepo root using `pnpm install`
-   - Builds only the web app using `pnpm run build --filter=@secure-file-drop/web`
-   - Outputs to `.next` directory
+   **Vercel Configuration** (in Project Settings → General):
    
-   **If you need manual configuration**:
-   - **Root Directory**: `apps/web` (REQUIRED - must match where package.json with Next.js is located)
-   - **Build Command**: `cd ../.. && pnpm install && pnpm run build --filter=@secure-file-drop/web`
-   - **Output Directory**: `.next` (default)
-   - **Install Command**: `cd ../.. && pnpm install`
+   **CRITICAL SETTINGS:**
+   - **Root Directory**: `apps/web` (REQUIRED - must be exactly this, no trailing slash)
+   - **Framework Preset**: **Next.js** (VERY IMPORTANT - select this from the dropdown if not auto-detected)
+   - **Node.js Version**: 18.x or higher (check in Settings → General → Node.js Version)
+   
+   **Build Settings** (can leave empty if using vercel.json):
+   - **Build Command**: Leave empty (vercel.json handles it) OR manually set: `cd ../.. && pnpm install && cd apps/web && pnpm run build`
+   - **Output Directory**: Leave empty (defaults to `.next`)
+   - **Install Command**: Leave empty (vercel.json handles it) OR manually set: `cd ../.. && pnpm install`
+   
+   **Package Manager**:
+   - **Package Manager**: pnpm (set this in Settings → General → Package Manager)
+   
+   **Troubleshooting 500 Errors**:
+   
+   If you're getting 500 errors on API routes:
+   1. **Check Build Logs**: Make sure the build completed successfully
+   2. **Check Function Logs**: Go to Deployments → Your deployment → Functions tab → Click on the failing function → Check Logs
+   3. **Test Simple Route**: Visit `/api/test` to verify API routes work at all
+   4. **Verify Root Directory**: Must be exactly `apps/web` (not `apps/web/` or anything else)
+   5. **Check Environment**: Make sure Node.js version is 18+ in Vercel settings
+   6. **Rebuild**: Try triggering a new deployment after fixing configuration
 
 4. **Set Environment Variables in Vercel Dashboard**:
    
    Go to your project settings → Environment Variables and add:
-   - `NEXT_PUBLIC_MASTER_KEY`: Your generated 64-character hex master key
-   - `NEXT_PUBLIC_API_URL`: Leave empty or set to `/api` (uses relative paths)
+   - `NEXT_PUBLIC_MASTER_KEY`: Your generated 64-character hex master key (REQUIRED)
+   - `NEXT_PUBLIC_API_URL`: **Leave this EMPTY** for Vercel deployment (it defaults to `/api`). Only set this if you're using a separate backend server.
+   
+   **Important**: 
+   - For Vercel deployment with Next.js API routes, `NEXT_PUBLIC_API_URL` should be **empty** or not set at all
+   - The frontend will automatically use `/api` as the default (relative path)
+   - Setting it to `/api` is also fine, but not necessary
+   - Only set `NEXT_PUBLIC_API_URL` if you're using a separate backend (e.g., `http://localhost:3001` for local dev)
    
    **Note**: The `NEXT_PUBLIC_` prefix makes these variables available to the browser. In production, consider implementing a key exchange protocol instead of exposing the master key.
 

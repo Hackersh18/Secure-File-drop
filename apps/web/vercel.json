@@ -1,6 +1,4 @@
 {
-  "buildCommand": "cd ../.. && pnpm install && pnpm run build --filter=@secure-file-drop/web",
-  "outputDirectory": ".next",
-  "installCommand": "cd ../.. && pnpm install",
-  "framework": "nextjs"
+  "buildCommand": "cd ../.. && pnpm install && cd apps/web && pnpm run build",
+  "installCommand": "cd ../.. && pnpm install"
 }

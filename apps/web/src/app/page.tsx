@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 
-// Use relative path for Vercel deployment, or absolute URL for local development with separate backend
+// Use relative path for Vercel deployment
+// For Vercel: use '/api' (relative path, no environment variable needed)
+// For local dev with separate backend: set NEXT_PUBLIC_API_URL to 'http://localhost:3001'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export default function Home() {
