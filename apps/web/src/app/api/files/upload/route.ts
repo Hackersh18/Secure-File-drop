@@ -1,24 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { randomBytes } from 'crypto';
 
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
 
-// In-memory storage - using global to share across serverless instances
-declare global {
-  var fileStore: Map<string, any> | undefined;
-}
-
-const getFileStore = () => {
-  if (!global.fileStore) {
-    global.fileStore = new Map();
-  }
-  return global.fileStore;
-};
-
-function generateFileId(): string {
-  const crypto = require('crypto');
-  return crypto.randomBytes(16).toString('hex');
-}
+// Simple in-memory storage
+const fileStore: Map<string, any> = new Map();
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,8 +40,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const fileId = generateFileId();
-    const fileStore = getFileStore();
+    // Generate file ID
+    const fileId = randomBytes(16).toString('hex');
 
     const record = {
       id: fileId,

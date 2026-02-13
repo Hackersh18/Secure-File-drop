@@ -1,19 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
 
-// In-memory storage - using global to share across serverless instances
-declare global {
-  var fileStore: Map<string, any> | undefined;
-}
-
-const getFileStore = () => {
-  if (!global.fileStore) {
-    global.fileStore = new Map();
-  }
-  return global.fileStore;
-};
+// Simple in-memory storage
+const fileStore: Map<string, any> = new Map();
 
 export async function GET(
   request: NextRequest,
@@ -22,7 +12,6 @@ export async function GET(
   try {
     // Handle both Next.js 14 (sync params) and Next.js 15 (async params)
     const resolvedParams = params instanceof Promise ? await params : params;
-    const fileStore = getFileStore();
     const record = fileStore.get(String(resolvedParams.id));
 
     if (!record) {
