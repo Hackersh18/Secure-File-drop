@@ -68,11 +68,11 @@ export default function Home() {
       throw new Error(`Master key must be 32 bytes (256 bits), got ${masterKeyBuffer.length} bytes`);
     }
     
-    // Create a new ArrayBuffer to ensure proper type compatibility
-    const masterKeyArrayBuffer = masterKeyBuffer.buffer.slice(
-      masterKeyBuffer.byteOffset,
-      masterKeyBuffer.byteOffset + masterKeyBuffer.byteLength
-    );
+    // Create a new ArrayBuffer by copying the bytes to avoid SharedArrayBuffer type issues
+    // Create a new Uint8Array copy, which ensures a new ArrayBuffer
+    const masterKeyCopy = new Uint8Array(masterKeyBuffer);
+    // Type assertion: new Uint8Array always creates ArrayBuffer, not SharedArrayBuffer
+    const masterKeyArrayBuffer = masterKeyCopy.buffer as ArrayBuffer;
     
     const masterKeyCrypto = await crypto.subtle.importKey(
       'raw',
@@ -131,11 +131,11 @@ export default function Home() {
       throw new Error(`Master key must be 32 bytes (256 bits), got ${masterKeyBuffer.length} bytes`);
     }
     
-    // Create a new ArrayBuffer to ensure proper type compatibility
-    const masterKeyArrayBuffer = masterKeyBuffer.buffer.slice(
-      masterKeyBuffer.byteOffset,
-      masterKeyBuffer.byteOffset + masterKeyBuffer.byteLength
-    );
+    // Create a new ArrayBuffer by copying the bytes to avoid SharedArrayBuffer type issues
+    // Create a new Uint8Array copy, which ensures a new ArrayBuffer
+    const masterKeyCopy = new Uint8Array(masterKeyBuffer);
+    // Type assertion: new Uint8Array always creates ArrayBuffer, not SharedArrayBuffer
+    const masterKeyArrayBuffer = masterKeyCopy.buffer as ArrayBuffer;
     
     const masterKeyCrypto = await crypto.subtle.importKey(
       'raw',

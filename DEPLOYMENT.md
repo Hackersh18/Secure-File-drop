@@ -36,9 +36,14 @@ Navigate to: **Project Settings → General**
 | Root Directory | `apps/web` | Exact path, no trailing slash |
 | Package Manager | `pnpm` | Must match your workspace |
 | Node.js Version | `18.x` or higher | Recommended: Latest LTS |
-| Build Command | (Auto-detected) | `pnpm run build` |
-| Output Directory | `.next` | (Auto-detected) |
-| Install Command | (Auto-detected) | `pnpm install` |
+| Build Command | **Leave empty** | Uses `vercel.json` settings |
+| Output Directory | **Leave empty** | Uses `vercel.json` settings (`.next`) |
+| Install Command | **Leave empty** | Uses `vercel.json` settings |
+
+**Note**: Since `apps/web/vercel.json` exists, Vercel will automatically use those settings. You can leave Build Command, Output Directory, and Install Command empty in the dashboard, or set them to match `vercel.json`:
+- **Build Command**: `cd ../.. && pnpm install && cd apps/web && pnpm run build`
+- **Output Directory**: `.next`
+- **Install Command**: `cd ../.. && pnpm install`
 
 ### Environment Variables
 
