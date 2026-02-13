@@ -2,9 +2,6 @@
 
 import { useState } from 'react';
 
-// Use relative path for Vercel deployment
-// For Vercel: use '/api' (relative path, no environment variable needed)
-// For local dev with separate backend: set NEXT_PUBLIC_API_URL to 'http://localhost:3001'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export default function Home() {
@@ -16,7 +13,6 @@ export default function Home() {
   const [isUploading, setIsUploading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Browser-side encryption using Web Crypto API
   async function encryptFile(file: File, masterKey: string): Promise<{
     file_nonce: string;
     file_ct: string;
@@ -25,15 +21,11 @@ export default function Home() {
     dek_wrapped: string;
     dek_wrap_tag: string;
   }> {
-    // Validate master key length (must be 64 hex chars = 32 bytes = 256 bits)
     if (!masterKey || masterKey.trim().length !== 64) {
       throw new Error('Master key must be exactly 64 hex characters (32 bytes)');
     }
 
-    // Generate random DEK (32 bytes)
     const dek = crypto.getRandomValues(new Uint8Array(32));
-
-    // Encrypt file with DEK
     const fileBuffer = await file.arrayBuffer();
     const fileNonce = crypto.getRandomValues(new Uint8Array(12));
     
@@ -49,29 +41,22 @@ export default function Home() {
       {
         name: 'AES-GCM',
         iv: fileNonce,
-        tagLength: 128, // 16 bytes
+        tagLength: 128,
       },
       dekKey,
       fileBuffer
     );
 
-    // Extract tag (last 16 bytes)
     const encryptedArray = new Uint8Array(encryptedFile);
     const fileTag = encryptedArray.slice(-16);
     const fileCiphertext = encryptedArray.slice(0, -16);
 
-    // Wrap DEK with master key
     const masterKeyBuffer = hexToBuffer(masterKey);
-    
-    // Validate master key buffer is exactly 32 bytes (256 bits)
     if (masterKeyBuffer.length !== 32) {
-      throw new Error(`Master key must be 32 bytes (256 bits), got ${masterKeyBuffer.length} bytes`);
+      throw new Error(`Master key must be 32 bytes, got ${masterKeyBuffer.length} bytes`);
     }
     
-    // Create a new ArrayBuffer by copying the bytes to avoid SharedArrayBuffer type issues
-    // Create a new Uint8Array copy, which ensures a new ArrayBuffer
     const masterKeyCopy = new Uint8Array(masterKeyBuffer);
-    // Type assertion: new Uint8Array always creates ArrayBuffer, not SharedArrayBuffer
     const masterKeyArrayBuffer = masterKeyCopy.buffer as ArrayBuffer;
     
     const masterKeyCrypto = await crypto.subtle.importKey(
@@ -118,23 +103,16 @@ export default function Home() {
     },
     masterKey: string
   ): Promise<ArrayBuffer> {
-    // Validate master key length (must be 64 hex chars = 32 bytes = 256 bits)
     if (!masterKey || masterKey.trim().length !== 64) {
       throw new Error('Master key must be exactly 64 hex characters (32 bytes)');
     }
 
-    // Unwrap DEK
     const masterKeyBuffer = hexToBuffer(masterKey);
-    
-    // Validate master key buffer is exactly 32 bytes (256 bits)
     if (masterKeyBuffer.length !== 32) {
-      throw new Error(`Master key must be 32 bytes (256 bits), got ${masterKeyBuffer.length} bytes`);
+      throw new Error(`Master key must be 32 bytes, got ${masterKeyBuffer.length} bytes`);
     }
     
-    // Create a new ArrayBuffer by copying the bytes to avoid SharedArrayBuffer type issues
-    // Create a new Uint8Array copy, which ensures a new ArrayBuffer
     const masterKeyCopy = new Uint8Array(masterKeyBuffer);
-    // Type assertion: new Uint8Array always creates ArrayBuffer, not SharedArrayBuffer
     const masterKeyArrayBuffer = masterKeyCopy.buffer as ArrayBuffer;
     
     const masterKeyCrypto = await crypto.subtle.importKey(
@@ -149,12 +127,10 @@ export default function Home() {
     const dekWrapped = hexToBuffer(encryptedData.dek_wrapped);
     const dekWrapTag = hexToBuffer(encryptedData.dek_wrap_tag);
 
-    // Combine wrapped DEK with tag
     const wrappedDekWithTag = new Uint8Array(dekWrapped.length + dekWrapTag.length);
     wrappedDekWithTag.set(dekWrapped);
     wrappedDekWithTag.set(dekWrapTag, dekWrapped.length);
 
-    // Ensure nonce is properly typed for crypto operations
     const dekWrapNonceBuffer = new Uint8Array(dekWrapNonce);
 
     const dekBuffer = await crypto.subtle.decrypt(
@@ -167,7 +143,6 @@ export default function Home() {
       wrappedDekWithTag
     );
 
-    // Decrypt file with DEK
     const dekKey = await crypto.subtle.importKey(
       'raw',
       dekBuffer,
@@ -180,12 +155,10 @@ export default function Home() {
     const fileCiphertext = hexToBuffer(encryptedData.file_ct);
     const fileTag = hexToBuffer(encryptedData.file_tag);
 
-    // Combine ciphertext with tag
     const fileCiphertextWithTag = new Uint8Array(fileCiphertext.length + fileTag.length);
     fileCiphertextWithTag.set(fileCiphertext);
     fileCiphertextWithTag.set(fileTag, fileCiphertext.length);
 
-    // Ensure nonce is properly typed for crypto operations
     const fileNonceBuffer = new Uint8Array(fileNonce);
 
     const decryptedFile = await crypto.subtle.decrypt(
@@ -202,10 +175,8 @@ export default function Home() {
   }
 
   function hexToBuffer(hex: string): Uint8Array {
-    // Remove any whitespace
     hex = hex.trim();
     
-    // Validate hex string length (must be even and 64 chars for 32 bytes)
     if (hex.length % 2 !== 0) {
       throw new Error('Hex string must have even length');
     }
@@ -237,22 +208,16 @@ export default function Home() {
     setUploadStatus({ type: 'info', message: 'Encrypting file...' });
 
     try {
-      // Get master key from environment (in real app, this would be handled differently)
-      // For demo purposes, we'll use a placeholder - in production this should be handled securely
       const masterKey = process.env.NEXT_PUBLIC_MASTER_KEY || '';
       if (!masterKey) {
         throw new Error('Master key not configured. Please set NEXT_PUBLIC_MASTER_KEY environment variable.');
       }
       
-      // Validate master key format
       if (masterKey.trim().length !== 64) {
         throw new Error(`Master key must be exactly 64 hex characters (got ${masterKey.trim().length}). Generate one with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`);
       }
 
-      // Encrypt file in browser
       const encryptedData = await encryptFile(selectedFile, masterKey);
-
-      // Upload to backend
       const response = await fetch(`${API_URL}/files/upload`, {
         method: 'POST',
         headers: {
@@ -305,18 +270,15 @@ export default function Home() {
       const fileData = await response.json();
       setDownloadStatus({ type: 'info', message: 'Decrypting file...' });
 
-      // Get master key
       const masterKey = process.env.NEXT_PUBLIC_MASTER_KEY || '';
       if (!masterKey) {
         throw new Error('Master key not configured. Please set NEXT_PUBLIC_MASTER_KEY environment variable.');
       }
       
-      // Validate master key format
       if (masterKey.trim().length !== 64) {
         throw new Error(`Master key must be exactly 64 hex characters (got ${masterKey.trim().length}). Generate one with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`);
       }
 
-      // Decrypt in browser
       const decryptedBuffer = await decryptFile(
         {
           file_nonce: fileData.file_nonce,
@@ -329,7 +291,6 @@ export default function Home() {
         masterKey
       );
 
-      // Trigger download
       const blob = new Blob([decryptedBuffer], { type: fileData.contentType });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

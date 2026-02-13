@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Simple in-memory storage
 const fileStore: Map<string, any> = new Map();
 
-// Generate file ID without crypto dependency
 function generateFileId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
@@ -20,7 +18,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Basic validation
     if (!body?.filename || !body?.contentType || !body?.size) {
       return NextResponse.json(
         { error: 'Missing required fields' },
@@ -42,7 +39,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate file ID
     const fileId = generateFileId();
 
     const record = {
